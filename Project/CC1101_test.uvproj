@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>CC1101_ctrl</TargetName>
+      <TargetName>CC1101_test</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
