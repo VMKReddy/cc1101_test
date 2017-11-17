@@ -18,6 +18,7 @@
 #include "./spi/bsp_spi.h"
 #include "./key/bsp_key.h" 
 #include "stm32f4_discovery.h"
+#include	<stdlib.h>
 
 
 /** @addtogroup STM32F4_Discovery_Peripheral_Examples
@@ -41,7 +42,7 @@ uint16_t SendCnt = 0;           // 计数发送的数据包数
 uint16_t RecvCnt = 0;           // 计数接收的数据包数
 
 // 需要发送的数据  
-uint8_t SendBuffer[SEND_LENGTH] = {0,'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','d','a','l','u','o','b','o'};	
+uint8_t SendBuffer[SEND_LENGTH] = {0,0,'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','d','a','l','u','o','b'};	
 // 需要应答的数据
 uint8_t AckBuffer[ACK_LENGTH] = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
 
@@ -96,12 +97,39 @@ void System_Initial(void)
 ============================================================================*/
 uint8_t RF_SendPacket(void)
 {
-	uint8_t i=0; 
-	for(i=0; i<255; i++)
+	uint16_t i=0;
+	uint8_t j, k, flag; 
+	for(i=0; i<4096; i++)
 	{
-		SendBuffer[0] = i;
+		    for (j=0; j<SEND_LENGTH; j++)  
+    {  
+        flag = rand() % 2;  
+        switch (flag)  
+        {  
+            case 0:  
+                SendBuffer[j] = 'A' + rand() % 26;
+                break;
+            case 1:  
+                SendBuffer[j] = 'a' + rand() % 26;
+                break;
+//            case 2:
+//                SendBuffer[j] = '0' + rand() % 10;  
+//                break;  
+            default:
+                SendBuffer[j] = 'x';
+                break;
+        }  
+    }  
 		
-		CC1101SendPacket(SendBuffer, 60, ADDRESS_CHECK);    // 发送数据
+		SendBuffer[0] = 0xFF & (i>>8);
+		SendBuffer[1] = 0xFF & i;
+		
+		//打印输出的数据字符串
+		printf("\n%d",(SendBuffer[0]*256+SendBuffer[1]));
+		for(k=2; k<SEND_LENGTH; k++)
+			printf("%c",SendBuffer[k]);
+		
+		CC1101SendPacket(SendBuffer, SEND_LENGTH, ADDRESS_CHECK);    // 发送数据
     
     CC1101SetTRMode(RX_MODE);       // 进入接收模式，等待应答
     
@@ -109,7 +137,7 @@ uint8_t RF_SendPacket(void)
     //i=CC1101ReadStatus(CC1101_TXBYTES);//for test, TX status
 	}
 	Usart_SendString(DEBUG_USART,"Transmit OK\r\n");   
-	return(1);  
+	return(1);
 }
 
 /**
@@ -128,7 +156,7 @@ void Get_Message(void)
     scanf("%d",&chip_address);
 		printf("%x\n", chip_address);
 		getchar();																// 排除回车
-		RF_Initial(chip_address, 0x8799, RX);     // 初始化无线芯片  				
+		RF_Initial(chip_address, 0x8799, RX);     // 初始化无线芯片
 				
 //		printf("please write down what you want to say\r\n");
 //    scanf("%[^\n]", SendBuffer);
@@ -140,7 +168,7 @@ void Get_Message(void)
 ============================================================================*/
 void RF_RecvHandler(void)
 {
-    uint8_t i=0, length=0, recv_buffer[64]={0};
+    uint8_t i=0, length=0, recv_buffer[SEND_LENGTH]={0};
     
     CC1101ReadStatus( CC1101_RXBYTES );	//for test, TX status
     CC1101SetTRMode(RX_MODE);           // 设置RF芯片接收模式，接收数据
@@ -153,22 +181,22 @@ void RF_RecvHandler(void)
         while (CC1101_IRQ_READ() == 0);
 
         // 数据请零，防止误判断
-        for (i=0; i<64; i++)   { recv_buffer[i] = 0; } 
+        for (i=0; i<SEND_LENGTH; i++)   { recv_buffer[i] = 0; } 
             
         // 读取接收到的数据长度和数据内容
         length = CC1101RecPacket(recv_buffer, &Chip_Addr);
         // 打印数据
 				if(length == 0)
 				{
-					printf("receive error or Address Filtering fail\n");
+					printf("\nreceive error or Address Filtering fail");
 				}
 				else
 				{
 //					printf("receive data length is %d\n",length);
 //					printf("receive chip address is %d\n",Chip_Addr);
-					printf("\n%d",recv_buffer[0]);
-					for(i=1; i<64; i++)
-					printf("%c",recv_buffer[i]);
+					printf("\n%d",(recv_buffer[0]*256+recv_buffer[1]));
+					for(i=2; i<SEND_LENGTH; i++)
+						printf("%c",recv_buffer[i]);
 				}
 
     }    
