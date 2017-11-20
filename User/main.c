@@ -87,7 +87,7 @@ void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 void System_Initial(void)
 {
     MCU_Initial();      // 初始化CPU所有硬件
-    RF_Initial(0x5, 0x8799, RX);     // 初始化无线芯片,发送模式       
+    RF_Initial(0x5, 0xD391, RX);     // 初始化无线芯片,发送模式       
 }
 
 /*===========================================================================
@@ -156,7 +156,7 @@ void Get_Message(void)
     scanf("%d",&chip_address);
 		printf("%x\n", chip_address);
 		getchar();																// 排除回车
-		RF_Initial(chip_address, 0x8799, RX);     // 初始化无线芯片
+		RF_Initial(chip_address, 0xD391, RX);     // 初始化无线芯片
 				
 //		printf("please write down what you want to say\r\n");
 //    scanf("%[^\n]", SendBuffer);
